@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - INVENKRAFT Sistem Manajemen Inventaris</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Styling khusus tab auth */
+    .auth-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-medium);
+      margin-bottom: 1.5rem;
+    }
+    .auth-tab-btn {
+      flex: 1;
+      padding: 0.65rem 0.5rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: center;
+      transition: all var(--transition-fast);
+    }
+    .auth-tab-btn.is-active {
+      color: var(--brand-primary);
+      border-bottom-color: var(--brand-primary);
+    }
+    .password-wrapper {
+      position: relative;
+    }
+    .password-toggle-btn {
+      position: absolute;
+      right: 0.6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.4rem;
+    }
+    .auth-alert {
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--border-radius-sm);
+      font-size: 0.82rem;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+    .auth-alert-error {
+      background-color: var(--status-danger-bg);
+      color: var(--status-danger-text);
+      border: 1px solid var(--status-danger-border);
+    }
+    .auth-alert-success {
+      background-color: var(--status-success-bg);
+      color: var(--status-success-text);
+      border: 1px solid var(--status-success-border);
+    }
+  </style>
+</head>
+<body class="auth-page">
+
+  <main class="auth-card" role="main">
+    <!-- Brand Header -->
+    <header class="auth-header">
+      <div class="auth-brand-logo" aria-hidden="true">IK</div>
+      <h1 class="auth-title">INVENKRAFT</h1>
+      <p class="auth-subtitle">Sistem Operasional & Manajemen Inventaris Toko</p>
+    </header>
+
+    <!-- Quick Credentials Helper Box -->
+    <aside class="auth-demo-box" aria-label="Akun Percobaan Cepat">
+      <div class="auth-demo-box-header">⚡ Akun Demo Bawaan (Klik Cepat):</div>
+      <button type="button" class="auth-demo-btn" id="btn-demo-admin" title="Gunakan akun Administrator">
+        <strong>admin</strong> : admin123
+      </button>
+      <button type="button" class="auth-demo-btn" id="btn-demo-staff" title="Gunakan akun Staff Gudang">
+        <strong>staff</strong> : staff123
+      </button>
+    </aside>
+
+    <!-- Navigation Tab (Login vs Register) -->
+    <nav class="auth-tabs" aria-label="Pilihan Form Autentikasi">
+      <button type="button" class="auth-tab-btn is-active" id="tab-login" aria-selected="true">Masuk Akun</button>
+      <button type="button" class="auth-tab-btn" id="tab-register" aria-selected="false">Daftar Akun Baru</button>
+    </nav>
+
+    <!-- Alert Container -->
+    <div id="auth-alert" class="auth-alert" role="alert"></div>
+
+    <!-- FORM 1: LOGIN -->
+    <form id="form-login" novalidate>
+      <div class="form-group" id="grp-login-username">
+        <label for="login-username" class="form-label">
+          Username atau Email <span class="req">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="login-username" 
+          name="username" 
+          class="form-input" 
+          placeholder="admin atau email@toko.com" 
+          autocomplete="username" 
+          required
+        >
+        <div class="form-error-msg" id="err-login-username">Username wajib diisi.</div>
+      </div>
+
+      <div class="form-group" id="grp-login-password">
+        <label for="login-password" class="form-label">
+          Kata Sandi <span class="req">*</span>
+        </label>
+        <div class="password-wrapper">
+          <input 
+            type="password" 
+            id="login-password" 
+            name="password" 
+            class="form-input" 
+            placeholder="••••••••" 
+            autocomplete="current-password" 
+            required
+          >
+          <button type="button" class="password-toggle-btn" id="toggle-login-pass" aria-label="Tampilkan sandi">LIHAT</button>
+        </div>
+        <div class="form-error-msg" id="err-login-password">Kata sandi wajib diisi.</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="btn-submit-login" style="width: 100%; margin-top: 0.5rem; height: 42px;">
+        <span class="btn-text">Masuk ke Sistem</span>
+        <span class="spinner spinner-sm" id="spinner-login" style="display: none;" aria-hidden="true"></span>
+      </button>
+    </form>
+
+    <!-- FORM 2: REGISTER (STAFF / ADMIN BARU) -->
+    <form id="form-register" style="display: none;" novalidate>
+      <div class="form-group">
+        <label for="reg-fullname" class="form-label">
+          Nama Lengkap <span class="req">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="reg-fullname" 
+          name="full_name" 
+          class="form-input" 
+          placeholder="cth: Budi Santoso" 
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="reg-username" class="form-label">
+          Username <span class="req">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="reg-username" 
+          name="username" 
+          class="form-input" 
+          placeholder="cth: budi_gudang" 
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="reg-email" class="form-label">
+          Email <span class="req">*</span>
+        </label>
+        <input 
+          type="email" 
+          id="reg-email" 
+          name="email" 
+          class="form-input" 
+          placeholder="budi@invenkraft.local" 
+          required
+        >
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="reg-password" class="form-label">
+            Kata Sandi <span class="req">*</span>
+          </label>
+          <input 
+            type="password" 
+            id="reg-password" 
+            name="password" 
+            class="form-input" 
+            placeholder="Min. 6 karakter" 
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label for="reg-role" class="form-label">
+            Peran (Role) <span class="req">*</span>
+          </label>
+          <select id="reg-role" name="role" class="form-select">
+            <option value="staff" selected>Staff Gudang</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="btn-submit-register" style="width: 100%; margin-top: 0.5rem; height: 42px;">
+        <span class="btn-text">Daftarkan Akun</span>
+        <span class="spinner spinner-sm" id="spinner-register" style="display: none;" aria-hidden="true"></span>
+      </button>
+    </form>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/login.js"></script>
+</body>
+</html>

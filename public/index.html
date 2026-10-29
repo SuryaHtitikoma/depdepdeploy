@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Inventaris - INVENKRAFT</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- =====================================================================
+       1. APP HEADER
+       ===================================================================== -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-block">
+        <div class="brand-logo" aria-hidden="true">IK</div>
+        <div class="brand-text-wrap">
+          <span class="brand-name">INVENKRAFT</span>
+          <span class="brand-tagline">Sistem Inventaris Pergudangan</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- User Info Badge -->
+        <div class="user-profile-badge" id="user-profile-badge">
+          <div class="user-avatar-mini" id="user-avatar-text">U</div>
+          <div class="user-details">
+            <span class="user-fullname" id="user-fullname-display">Memuat Pengguna...</span>
+            <span class="user-role" id="user-role-display">-</span>
+          </div>
+        </div>
+
+        <!-- Logout Button -->
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-logout" title="Keluar dari sesi akun">
+          <span>Keluar</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       2. METRICS SUMMARY RIBBON
+       ===================================================================== -->
+  <section class="metrics-section" aria-label="Statistik Operasional">
+    <div class="metrics-grid">
+      <!-- Card 1: Total SKU -->
+      <article class="metric-card accent-navy">
+        <div class="metric-header">
+          <span class="metric-label">Total Jenis Produk</span>
+          <span class="metric-icon">📦</span>
+        </div>
+        <div class="metric-value" id="stat-total-skus">-</div>
+        <div class="metric-sub" id="stat-total-units">Memuat total unit...</div>
+      </article>
+
+      <!-- Card 2: Valuasi Modal Aset -->
+      <article class="metric-card accent-blue">
+        <div class="metric-header">
+          <span class="metric-label">Valuasi Modal Stok</span>
+          <span class="metric-icon">💰</span>
+        </div>
+        <div class="metric-value" id="stat-asset-val">-</div>
+        <div class="metric-sub" id="stat-sales-val">Estimasi omset jual: -</div>
+      </article>
+
+      <!-- Card 3: Peringatan Stok Menipis -->
+      <article class="metric-card accent-amber">
+        <div class="metric-header">
+          <span class="metric-label">Stok Menipis</span>
+          <span class="metric-icon">⚠️</span>
+        </div>
+        <div class="metric-value" id="stat-low-stock">-</div>
+        <div class="metric-sub">Perlu restock segera (≤ batas aman)</div>
+      </article>
+
+      <!-- Card 4: Stok Habis / Kritis -->
+      <article class="metric-card accent-rose">
+        <div class="metric-header">
+          <span class="metric-label">Stok Habis</span>
+          <span class="metric-icon">🚫</span>
+        </div>
+        <div class="metric-value" id="stat-out-stock">-</div>
+        <div class="metric-sub">Barang kosong di gudang (0 unit)</div>
+      </article>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       3. MAIN CRUD WORKSPACE
+       ===================================================================== -->
+  <main class="main-content">
+    <div class="panel-card">
+
+      <!-- TOOLBAR: FILTER, SEARCH, ACTIONS -->
+      <div class="toolbar-container">
+        <div class="toolbar-filters">
+          <!-- Search Box -->
+          <div class="search-box-wrapper">
+            <span class="search-icon-left" aria-hidden="true">🔍</span>
+            <input 
+              type="text" 
+              id="filter-search" 
+              class="form-input" 
+              placeholder="Cari SKU, nama produk, catatan..."
+              autocomplete="off"
+            >
+            <button type="button" class="search-clear-btn" id="btn-clear-search" aria-label="Bersihkan pencarian">&times;</button>
+          </div>
+
+          <!-- Category Filter -->
+          <select id="filter-category" class="form-select filter-select" aria-label="Filter berdasarkan Kategori">
+            <option value="">Semua Kategori</option>
+          </select>
+
+          <!-- Stock Status Filter -->
+          <select id="filter-status" class="form-select filter-select" aria-label="Filter berdasarkan Status Stok">
+            <option value="">Semua Status Stok</option>
+            <option value="in_stock">Stok Aman</option>
+            <option value="low_stock">Stok Menipis (Warning)</option>
+            <option value="out_of_stock">Stok Habis (Kosong)</option>
+          </select>
+
+          <!-- Sort Filter -->
+          <select id="filter-sort" class="form-select filter-select" style="min-width: 140px;" aria-label="Urutkan Berdasarkan">
+            <option value="created_at" selected>Terbaru Ditambahkan</option>
+            <option value="name">Nama Produk (A-Z)</option>
+            <option value="sku">Kode SKU</option>
+            <option value="stock">Jumlah Stok</option>
+            <option value="selling_price">Harga Jual</option>
+          </select>
+
+          <!-- Sort Direction Toggle -->
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-sort-order" title="Ganti arah urutan" style="height: 38px;">
+            <span id="sort-order-icon">↓ DESC</span>
+          </button>
+        </div>
+
+        <div class="toolbar-actions">
+          <button type="button" class="btn btn-secondary" id="btn-refresh" title="Muat ulang data">
+            <span>↻ Segarkan</span>
+          </button>
+          <button type="button" class="btn btn-primary" id="btn-add-product">
+            <span>+ Tambah Produk</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- DATA TABLE CONTAINER -->
+      <div class="table-wrapper">
+        <table class="data-table" id="products-table">
+          <thead>
+            <tr>
+              <th style="width: 130px;">Kode SKU</th>
+              <th>Nama Produk</th>
+              <th style="width: 150px;">Kategori</th>
+              <th class="text-right" style="width: 130px;">Harga Beli</th>
+              <th class="text-right" style="width: 130px;">Harga Jual</th>
+              <th class="text-right" style="width: 100px;">Margin</th>
+              <th class="text-center" style="width: 150px;">Stok Gudang</th>
+              <th style="width: 140px;">Dibuat Oleh</th>
+              <th class="text-right" style="width: 140px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="products-table-body">
+            <!-- Data rows injected dynamically via app.js -->
+          </tbody>
+        </table>
+
+        <!-- Loading State Indicator -->
+        <div id="table-loading" class="loading-indicator">
+          <div class="spinner"></div>
+          <p class="text-muted">Memuat data inventaris...</p>
+        </div>
+
+        <!-- Empty State Container -->
+        <div id="table-empty" class="empty-state">
+          <div class="empty-icon-box" aria-hidden="true">📦</div>
+          <h3 class="empty-title">Tidak Ada Produk Ditemukan</h3>
+          <p class="empty-desc" id="empty-desc-text">
+            Tidak ada barang inventaris yang sesuai dengan kriteria pencarian atau filter yang Anda pilih.
+          </p>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-reset-filters">Reset Filter</button>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-empty-add">+ Tambah Produk Baru</button>
+          </div>
+        </div>
+
+        <!-- Error State Container -->
+        <div id="table-error" class="empty-state" style="display: none;">
+          <div class="empty-icon-box" style="border-color: #f87171; color: #dc2626;" aria-hidden="true">✕</div>
+          <h3 class="empty-title">Gagal Mengambil Data</h3>
+          <p class="empty-desc" id="table-error-message">Terjadi gangguan saat menghubungi server basis data.</p>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-retry-fetch">Coba Lagi</button>
+        </div>
+      </div>
+
+      <!-- PAGINATION BAR -->
+      <footer class="pagination-footer">
+        <div class="pagination-meta" id="pagination-meta-text">
+          Menampilkan <b>0</b> - <b>0</b> dari total <b>0</b> produk
+        </div>
+
+        <div class="pagination-nav">
+          <div style="display: flex; align-items: center; gap: 0.4rem; margin-right: 0.75rem;">
+            <label for="select-page-limit" class="form-hint">Tampilkan:</label>
+            <select id="select-page-limit" class="form-select btn-sm" style="width: auto; padding: 0.2rem 0.5rem; height: 32px;">
+              <option value="10" selected>10 baris</option>
+              <option value="25">25 baris</option>
+              <option value="50">50 baris</option>
+            </select>
+          </div>
+
+          <button type="button" class="page-btn" id="btn-prev-page" title="Halaman sebelumnya" disabled>&laquo;</button>
+          <div id="pagination-numbers" style="display: flex; gap: 0.25rem;"></div>
+          <button type="button" class="page-btn" id="btn-next-page" title="Halaman berikutnya" disabled>&raquo;</button>
+        </div>
+      </footer>
+
+    </div>
+  </main>
+
+  <!-- =====================================================================
+       4. MODAL: TAMBAH / EDIT PRODUK
+       ===================================================================== -->
+  <div class="modal-backdrop" id="modal-product" role="dialog" aria-modal="true" aria-labelledby="modal-product-title">
+    <div class="modal-dialog">
+      <header class="modal-header">
+        <h2 class="modal-title" id="modal-product-title">Tambah Produk Baru</h2>
+        <button type="button" class="modal-close-btn" id="btn-close-product-modal" aria-label="Tutup modal">&times;</button>
+      </header>
+
+      <form id="form-product" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="prod-id" name="id">
+
+          <!-- Row 1: SKU & Nama -->
+          <div class="form-grid-2">
+            <div class="form-group" id="grp-prod-sku">
+              <label for="prod-sku" class="form-label">
+                Kode SKU
+                <span class="form-hint">(Opsional / Otomatis)</span>
+              </label>
+              <input 
+                type="text" 
+                id="prod-sku" 
+                name="sku" 
+                class="form-input text-mono" 
+                placeholder="cth: ELK-004-PRD"
+              >
+              <div class="form-error-msg" id="err-prod-sku">SKU tidak valid.</div>
+            </div>
+
+            <div class="form-group" id="grp-prod-category">
+              <label for="prod-category" class="form-label">
+                Kategori <span class="req">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="prod-category" 
+                name="category" 
+                list="category-suggestions" 
+                class="form-input" 
+                placeholder="Pilih atau ketik kategori..." 
+                required
+              >
+              <datalist id="category-suggestions">
+                <option value="Elektronik">
+                <option value="Alat Tulis Kantor">
+                <option value="Peralatan Toko">
+                <option value="Kemasan & Packing">
+                <option value="Aksesoris Komputer">
+              </datalist>
+              <div class="form-error-msg" id="err-prod-category">Kategori wajib diisi.</div>
+            </div>
+          </div>
+
+          <!-- Row 2: Nama Produk -->
+          <div class="form-group" id="grp-prod-name">
+            <label for="prod-name" class="form-label">
+              Nama Produk / Barang <span class="req">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="prod-name" 
+              name="name" 
+              class="form-input" 
+              placeholder="cth: Wireless Mouse M220 Silent" 
+              required
+            >
+            <div class="form-error-msg" id="err-prod-name">Nama produk wajib diisi.</div>
+          </div>
+
+          <!-- Row 3: Harga Beli & Harga Jual -->
+          <div class="form-grid-2">
+            <div class="form-group" id="grp-prod-purchase">
+              <label for="prod-purchase-price" class="form-label">
+                Harga Beli Pokok (Rp) <span class="req">*</span>
+              </label>
+              <input 
+                type="number" 
+                id="prod-purchase-price" 
+                name="purchase_price" 
+                class="form-input text-mono" 
+                placeholder="0" 
+                min="0" 
+                step="500" 
+                required
+              >
+              <div class="form-hint" id="hint-purchase-preview">Rp 0</div>
+            </div>
+
+            <div class="form-group" id="grp-prod-selling">
+              <label for="prod-selling-price" class="form-label">
+                Harga Jual Toko (Rp) <span class="req">*</span>
+              </label>
+              <input 
+                type="number" 
+                id="prod-selling-price" 
+                name="selling_price" 
+                class="form-input text-mono" 
+                placeholder="0" 
+                min="0" 
+                step="500" 
+                required
+              >
+              <div class="form-hint" id="hint-selling-preview">Rp 0</div>
+            </div>
+          </div>
+
+          <!-- Row 4: Stok, Batas Minimum, Satuan -->
+          <div class="form-grid-3">
+            <div class="form-group" id="grp-prod-stock">
+              <label for="prod-stock" class="form-label">
+                Stok Fisik <span class="req">*</span>
+              </label>
+              <input 
+                type="number" 
+                id="prod-stock" 
+                name="stock" 
+                class="form-input text-mono" 
+                placeholder="0" 
+                min="0" 
+                required
+              >
+            </div>
+
+            <div class="form-group" id="grp-prod-min-stock">
+              <label for="prod-min-stock" class="form-label">
+                Batas Min. Stok <span class="req">*</span>
+              </label>
+              <input 
+                type="number" 
+                id="prod-min-stock" 
+                name="min_stock" 
+                class="form-input text-mono" 
+                value="5" 
+                min="1" 
+                required
+              >
+            </div>
+
+            <div class="form-group" id="grp-prod-unit">
+              <label for="prod-unit" class="form-label">
+                Satuan <span class="req">*</span>
+              </label>
+              <select id="prod-unit" name="unit" class="form-select">
+                <option value="pcs" selected>pcs</option>
+                <option value="unit">unit</option>
+                <option value="box">box</option>
+                <option value="lusin">lusin</option>
+                <option value="roll">roll</option>
+                <option value="pack">pack</option>
+                <option value="set">set</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 5: Deskripsi Singkat -->
+          <div class="form-group">
+            <label for="prod-desc" class="form-label">Keterangan / Spesifikasi</label>
+            <textarea 
+              id="prod-desc" 
+              name="description" 
+              class="form-textarea" 
+              rows="3" 
+              placeholder="Catatan spesifikasi produk, lokasi rak, atau vendor..."
+            ></textarea>
+          </div>
+        </div>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-product-modal">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-product">
+            <span class="btn-text">Simpan Produk</span>
+            <span class="spinner spinner-sm" id="spinner-product-save" style="display: none;" aria-hidden="true"></span>
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       5. MODAL: KONFIRMASI HAPUS
+       ===================================================================== -->
+  <div class="modal-backdrop" id="modal-delete" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+    <div class="modal-dialog modal-dialog-sm">
+      <header class="modal-header">
+        <h2 class="modal-title" id="modal-delete-title" style="color: #dc2626;">Hapus Data Produk</h2>
+        <button type="button" class="modal-close-btn" id="btn-close-delete-modal" aria-label="Tutup modal">&times;</button>
+      </header>
+
+      <div class="modal-body">
+        <p style="margin-bottom: 0.75rem;">
+          Apakah Anda yakin ingin menghapus produk berikut secara permanen dari sistem inventaris?
+        </p>
+        <div style="background-color: var(--bg-subtle); padding: 0.75rem; border: 1px solid var(--border-medium); border-radius: var(--border-radius-sm); font-size: 0.85rem;">
+          <div>Nama: <strong id="delete-prod-name">-</strong></div>
+          <div style="margin-top: 0.25rem;">SKU: <span class="text-mono" id="delete-prod-sku">-</span></div>
+        </div>
+        <p class="form-hint" style="margin-top: 0.75rem; color: #dc2626;">
+          Perhatian: Tindakan ini tidak dapat dibatalkan setelah disetujui.
+        </p>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-delete">Batalkan</button>
+        <button type="button" class="btn btn-danger-solid" id="btn-confirm-delete">
+          <span class="btn-text">Ya, Hapus Produk</span>
+          <span class="spinner spinner-sm" id="spinner-delete" style="display: none;" aria-hidden="true"></span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
