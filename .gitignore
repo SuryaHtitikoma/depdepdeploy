@@ -1,0 +1,17 @@
+# Folder node_modules (Node.js)
+node_modules/
+
+# File environment variables (Kunci API/Database)
+.env
+.env.local
+
+# Build output / Distribuasi
+dist/
+build/
+
+# Log file
+*.log
+
+# File sistem operasi
+.DS_Store
+Thumbs.db
